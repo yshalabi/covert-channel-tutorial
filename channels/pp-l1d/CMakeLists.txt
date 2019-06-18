@@ -1,6 +1,1 @@
-add_executable (pp-l1d-send sender.c)
-target_link_libraries (pp-l1d-send LINK_PUBLIC util)
-target_link_libraries (pp-l1d-send LINK_PUBLIC l1d)
-add_executable (pp-l1d-recv receiver.c)
-target_link_libraries (pp-l1d-recv LINK_PUBLIC util)
-target_link_libraries (pp-l1d-recv LINK_PUBLIC l1d)
+../../external/src/Prime-Probe-L1d/channels/pp-l1d/CMakeLists.txt
