@@ -1,173 +1,20 @@
 #include "util.h"
 
-// Hugepage
-#define HUGEPAGE_BITS 21
-#define HUGEPAGE_SIZE (1 << HUGEPAGE_BITS)
-#define HUGEPAGE_MASK (HUGEPAGE_SIZE - 1)
-
-// Cache
-#define CACHE_LINESIZE      64
-#define LOG_CACHE_LINESIZE  6
-
-// L1
-#define LOG_CACHE_SETS_L1   6
-#define CACHE_SETS_L1       64
-#define CACHE_SETS_L1_MASK  (CACHE_SETS_L1 - 1)
-#define CACHE_WAYS_L1       8
-#define CACHE_WAYS_L2       8
-
-// LLC
-
-#define LOG_CACHE_SETS_L3   15
-#define CACHE_SETS_L3       32768
-#define CACHE_SETS_L3_MASK  (CACHE_SETS_L3 - 1)
-#define CACHE_WAYS_L3       20
-
-
-// Access period of 0x00050000 seems too be sufficient for i3-metal
-#define CHANNEL_DEFAULT_INTERVAL        0x000f0000
-#define CHANNEL_DEFAULT_PERIOD          0x00050000
-#define CHANNEL_DEFAULT_REGION          0x0
-#define CHANNEL_SYNC_TIMEMASK           0x003fffff
-#define CHANNEL_SYNC_JITTER             0x4000
-#define CHANNEL_L3_MISS_THRESHOLD       220
-#define CHANNEL_L2_MISS_THRESHOLD       150 	// not used
-#define CHANNEL_L1_MISS_THRESHOLD       84
-#define MAX_BUFFER_LEN                  1024
-
-// TODO: following parameters need to be verified
-#define CHANNEL_FR_DEFAULT_INTERVAL     0x00008000 // (1<<15)
-#define CHANNEL_FR_DEFAULT_PERIOD       0x00000800 // (1<<11)
-
-
-typedef enum _channel {
-    PrimeProbe = 0,
-    FlushReload,
-    L1DPrimeProbe
-} Channel;
-
-
-uint64_t printPID() {
-    uint64_t pid = getpid();
-    printf("Process ID: %lu\n", pid);
-    return pid;
-}
-
-void print_help() {
-    // TODO
-}
-
-/*
- * Execution config of the program, with the variables
- * that we need to pass around the various functions.
- */
-struct config {
-    char *buffer;
-    struct Node *addr_set;
-    uint64_t cache_region;
-    uint64_t interval;
-    uint64_t prime_period;
-    uint64_t access_period;
-    uint64_t probe_period;
-    uint64_t miss_threshold;
-    char *shared_filename;
-    bool benchmark_mode;        // sender only
-    Channel channel;
-};
-
-void init_default(struct config *config, int argc, char **argv) {
-
-    config->buffer = NULL;
-    config->addr_set = NULL;
-
-    // Cache region specifies the targeted set
-    config->cache_region = CHANNEL_DEFAULT_REGION;
-    // Interval specifies the time used to send a single bit
-    config->interval = CHANNEL_DEFAULT_INTERVAL;
-
-    // Prime+Probe specific paramters:
-    config->access_period = CHANNEL_DEFAULT_PERIOD;
-    config->prime_period = CHANNEL_DEFAULT_PERIOD;
-
-    // Flush+Reload specific paramters:
-    config->shared_filename = "shared.txt";
-
-    config->benchmark_mode = false;
-
-    config->channel = PrimeProbe;
-
-    // Parse the command line flags
-    //      -d is used to enable the debug prints
-    //      -i is used to specify a custom value for the time interval
-    //      -w is used to specify a custom number of wait time between two probes
-    int option;
-    while ((option = getopt(argc, argv, "di:a:r:c:")) != -1) {
-        switch (option) {
-            case 'i':
-                config->interval = atoi(optarg);
-                break;
-            case 'r':
-                config->cache_region = atoi(optarg);
-                break;
-            case 'a':
-                config->access_period = atoi(optarg);
-                break;
-            case 'c':
-                // value 0,1,2 to select channel
-                config->channel = atoi(optarg);
-                break;
-            case '?':
-                fprintf(stderr, "Unknown option character `\\x%x'.\n", optopt);
-                print_help();
-                exit(1);
-            default:
-                print_help();
-                exit(1);
-        }
-    }
-
-    if (config->channel == PrimeProbe || config->channel == L1DPrimeProbe) {
-        config->miss_threshold = config->channel == PrimeProbe?
-                                 CHANNEL_L3_MISS_THRESHOLD:
-                                 CHANNEL_L1_MISS_THRESHOLD;
-        if (config->interval < config->prime_period + config->access_period) {
-            fprintf(stderr, "ERROR: P+P channel bit interval too short!\n");
-            exit(-1);
-        }
-        else {
-            config->probe_period = config->interval - config->prime_period - config->access_period;
-        }
-    }
-
-    // debug("prime %u access %u probe %u\n", config->prime_period, config->access_period, config->probe_period);
-    //
-    if (config->channel == FlushReload) {
-        config->access_period = CHANNEL_FR_DEFAULT_INTERVAL;
-        config->access_period = CHANNEL_FR_DEFAULT_PERIOD;
-        config->miss_threshold = CHANNEL_L1_MISS_THRESHOLD;
-        if (config->cache_region > 63) {
-            fprintf(stderr, "ERROR: F+R channel region should be within a 4K page (64lines)!\n");
-            exit(-1);
-        }
-    }
-
-}
-
 /*
  * Parses the arguments and flags of the program and initializes the struct config
  * with those parameters (or the default ones if no custom flags are given).
  */
-void init_config(struct config *config, int argc, char **argv)
-{
-    uint64_t pid = printPID();
+void init_config(struct config *config, int argc, char **argv) {
+    uint64_t pid = print_pid();
 
     init_default(config, argc, argv);
 
-    if (config->channel == PrimeProbe || config->channel == L1DPrimeProbe) {
+    if (config->channel == PrimeProbe) {
         int L1_way_stride = ipow(2, LOG_CACHE_SETS_L1 + LOG_CACHE_LINESIZE); // 4096
         uint64_t bsize = 1024 * CACHE_WAYS_L1 * L1_way_stride; // 64 * 8 * 4k = 2M
 
         // Allocate a buffer twice the size of the L1 cache
+        config->buffer = allocate_buffer(bsize);
 
         printf("buffer pointer addr %p\n", config->buffer);
         // Initialize the buffer to be be the non-zero page
@@ -180,27 +27,23 @@ void init_config(struct config *config, int argc, char **argv)
         for (int i = 0; i < 1024 * CACHE_WAYS_L1 * CACHE_SETS_L1; i++) {
             ADDR_PTR addr = (ADDR_PTR) (config->buffer + CACHE_LINESIZE * i);
             // both of following function should work...L3 is a more restrict set
-            {
+            if (get_cache_slice_set_index(addr) == config->cache_region) {
             // if (get_L3_cache_set_index(addr) == config->cache_region) {
                 append_string_to_linked_list(&config->addr_set, addr);
                 addr_set_size++;
             }
             // restrict the probing set to CACHE_WAYS_L1 to aviod self eviction
-            if (config->channel == L1DPrimeProbe && addr_set_size >= CACHE_WAYS_L1) {
-		break;
-	    }
-	    else if (addr_set_size >= 2 * (CACHE_WAYS_L1 + CACHE_WAYS_L2)) {
-		break;
-	    }
+	        if (addr_set_size >= 2 * (CACHE_WAYS_L1 + CACHE_WAYS_L2)) {
+                break;
+	        }
         }
-
         printf("Found addr_set size of %u\n", addr_set_size);
     }
-
 }
 
 // receiver function pointer
 bool (*detect_bit)(const struct config*, bool);
+
 /*
  * Detects a bit by repeatedly measuring the access time of the addresses in the
  * probing set and counting the number of misses for the clock length of config->interval.
@@ -211,7 +54,7 @@ bool (*detect_bit)(const struct config*, bool);
 // bool detect_bit(const struct config *config, bool first_bit, uint64_t start_t)
 bool detect_bit_pp(const struct config *config, bool first_bit)
 {
-    uint64_t start_t = 0;
+    uint64_t start_t = get_time();
     // debug("time %lx\n", start_t);
 
     int misses = 0;
@@ -235,14 +78,15 @@ bool detect_bit_pp(const struct config *config, bool first_bit)
             current = current->next;
             prime_count++;
         }
-    } while (1);
+    } while ((get_time() - start_t) < config->prime_period);
     // debug("prime count%lu\n", prime_count);
 
     // wait for sender to access
+    while (get_time() - start_t < (config->prime_period + config->access_period)) {}
 
     // probe
     current = config->addr_set;
-    {
+    while (current != NULL && (get_time() - start_t) < config->interval) {
         ADDR_PTR addr = current->addr;
         uint64_t time = measure_one_block_access_time(addr);
 
@@ -258,6 +102,9 @@ bool detect_bit_pp(const struct config *config, bool first_bit)
         // debug("access time %lu\n", time);
     }
 
+    if (misses != 0) {
+        debug("Misses: %d out of %d\n", misses, total_measurements);
+    }
 
     bool ret = (misses > CACHE_WAYS_L1 / 2 - 1)? true: false;
     // FIXME: If only one set region used in a L1D, the channel is really not
@@ -266,6 +113,7 @@ bool detect_bit_pp(const struct config *config, bool first_bit)
     // The hardcoded 1 miss count threshold can be used for a noisy l1d-PP
     // bool ret = (misses > 1)? true: false;
 
+    while (get_time() - start_t < config->interval) {}
 
     return ret;
 }
@@ -279,9 +127,13 @@ int main(int argc, char **argv)
     // Initialize config and local variables
     struct config config;
     init_config(&config, argc, argv);
-
-    detect_bit = detect_bit_pp;
-
+    if (config.channel == PrimeProbe) {
+        detect_bit = detect_bit_pp;
+    }
+    else {
+        fprintf(stderr, "This branch only supports LLC-PrimeProbe\n");
+        exit(-1);
+    }
 
     char msg_ch[MAX_BUFFER_LEN + 1];
     int flip_sequence = 4;
@@ -294,7 +146,7 @@ int main(int argc, char **argv)
     while (1) {
 
         // cc_sync on clock edge
-        uint64_t start_t = 0;
+        uint64_t start_t = cc_sync();
         // current = detect_bit(&config, first_time, start_t);
         current = detect_bit(&config, first_time);
 
@@ -322,18 +174,33 @@ int main(int argc, char **argv)
         // Finally, when a NULL byte is received the receiver exits the
         // message receiving mode and restarts from the base config.
         if (flip_sequence == 0 && current == 1 && previous == 1) {
+            debug("Start sequence fully detected.\n\n");
 
             uint32_t msg_len = 0, strike_zeros = 0;
+            start_t = cc_sync();
             for (msg_len = 0; msg_len < MAX_BUFFER_LEN; msg_len++) {
-
+#if 1
                 // uint32_t bit = detect_bit(&config, first_time, start_t);
                 uint32_t bit = detect_bit(&config, first_time);
                 msg_ch[msg_len] = '0' + bit;
                 strike_zeros = (strike_zeros + (1-bit)) & (bit-1);
                 if (strike_zeros >= 8 && ((msg_len & 0x7) == 0)) {
+                    debug("String finished\n");
                     break;
                 }
 
+#else
+                if (detect_bit(&config, first_time)) {
+                    msg_ch[msg_len] = '1';
+                    strike_zeros = 0;
+                } else {
+                    msg_ch[msg_len] = '0';
+                    if (++strike_zeros >= 8 && msg_len % 8 == 0) {
+                        debug("String finished\n");
+                        break;
+                    }
+                }
+#endif
                 start_t += config.interval;
             }
 
@@ -342,6 +209,7 @@ int main(int argc, char **argv)
 
             uint32_t ascii_msg_len = msg_len / 8;
             char msg[ascii_msg_len];
+            printf("> %s\n", conv_msg(msg_ch, ascii_msg_len, msg));
             if (strcmp(msg, "exit") == 0) {
                 break;
             }
