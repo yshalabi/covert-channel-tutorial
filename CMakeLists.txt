@@ -38,7 +38,8 @@ ExternalProject_Add(Prime-Probe-L1d
 
 ExternalProject_Add(mastik
     URL https://cs.adelaide.edu.au/~yval/Mastik/releases/Mastik-0.02-AyeAyeCapn.tgz
-    PREFIX ${PROJECT_SOURCE_DIR}/external
+    DOWNLOAD_DIR ${PROJECT_SOURCE_DIR}/cc-libs
+    BUILD_IN_SOURCE TRUE
     BUILD_COMMAND ""
     CONFIGURE_COMMAND ""
     INSTALL_COMMAND ""
