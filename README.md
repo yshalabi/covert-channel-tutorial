@@ -6,8 +6,28 @@ cd build
 cmake ..
 make
 ```
-#Flush-and-Reload
-#Prime-and-probe
-#Capture-the-Flag
+#covert-channels
+##Flush-and-Reload
+```sh
+./fr-send FILE
+./fr-recv FILE
+```
+
+##Prime-and-probe
+Running the l1d prime+probe
+```sh
+# Y,X are sibling threads
+taskset -c Y ./pp-l1d-send
+taskset -c X ./pp-l1d-recv
+```
+
+Running the LLC prime+probe;
+```sh
+./pp-llc-send
+./pp-llc-recv
+```
+
+##Capture-the-Flag
+
 #Sources
 all sources are in the external directory
