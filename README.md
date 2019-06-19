@@ -6,14 +6,14 @@ cd build
 cmake ..
 make
 ```
-#covert-channels
-##Flush-and-Reload
+# covert-channels
+## Flush-and-Reload
 ```sh
 ./fr-send FILE
 ./fr-recv FILE
 ```
 
-##Prime-and-probe
+## Prime-and-probe
 Running the l1d prime+probe
 ```sh
 # Y,X are sibling threads
@@ -26,8 +26,6 @@ Running the LLC prime+probe;
 ./pp-llc-send
 ./pp-llc-recv
 ```
-
-##Capture-the-Flag
 
 #Sources
 all sources are in the external directory
