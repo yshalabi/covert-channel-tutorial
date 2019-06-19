@@ -3,6 +3,7 @@ include(ExternalProject)
 project (covert-channels)
 add_subdirectory (cc-libs)
 add_subdirectory (channels/pp-l1d)
+add_subdirectory (channels/fr)
 #add_subdirectory (channels/drng)
 ExternalProject_Add(Flush-Reload
     GIT_REPOSITORY https://github.com/moehajj/Flush-Reload.git
