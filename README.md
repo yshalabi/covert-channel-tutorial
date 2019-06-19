@@ -36,4 +36,7 @@ Running the LLC prime+probe;
 ```
 
 # Sources
-all sources are in the external directory
+The covert-channel implementaions are sourced from the following repositories. You can examine the sources in  the"extern" directory.
+- repo1
+- repo2
+- repo3
