@@ -5,3 +5,7 @@
 [submodule "extern/fr-repo"]
 	path = extern/fr-repo
 	url = ../../moehajj/Flush-Reload
+[submodule "extern/pp-l1d-repo"]
+	path = extern/pp-l1d-repo
+	url = ../../yshalabi/cc-fun
+    branch = isca19_tut
