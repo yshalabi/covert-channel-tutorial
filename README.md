@@ -1,6 +1,14 @@
 # Build instructions
+## Dockerized
 ```sh
-git clone https://github.com/yshalabi/isca19-cc-handson.git
+git clone https://github.com/yshalabi/isca19-cc-handson.git && cd isca19-cc-handson
+docker build --tag=cc .
+docker run cc
+```
+
+## Manual
+```sh
+git clone https://github.com/yshalabi/isca19-cc-handson.git && cd isca19-cc-handson
 mkdir build
 cd build
 cmake ..
