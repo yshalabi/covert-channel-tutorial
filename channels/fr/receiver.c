@@ -155,7 +155,7 @@ int main(int argc, char **argv)
 
             int ascii_msg_len = binary_msg_len / 8;
             char msg[ascii_msg_len];
-            printf("> %s\n", conv_char(msg_ch, ascii_msg_len, msg));
+            printf("> %s\n", conv_msg(msg_ch, ascii_msg_len, msg));
             if (strcmp(msg, "exit") == 0) {
                 break;
             }
