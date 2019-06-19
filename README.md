@@ -2,8 +2,8 @@
 ## Dockerized
 ```sh
 git clone https://github.com/yshalabi/isca19-cc-handson.git && cd isca19-cc-handson
-docker build -t genchans .
-docker run -v `pwd`/cc:/isca19/bins genchans
+docker build -t compile .
+docker run -v `pwd`/cc:/isca19/bins compile
 ```
 
 ## Manual

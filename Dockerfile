@@ -11,14 +11,10 @@ RUN \
 
 # Set environment variables.
 #ENV HOME /root
-
 WORKDIR /isca19
-
-# Copy the current directory contents into the container at /app
-COPY . /isca19
 
 RUN mkdir build && cd build && cmake .. && make && ls
 
-CMD sh isca19.sh
+COPY . /isca19
 
-#cp build/pp* /isca19/bins
+CMD sh isca19.sh
