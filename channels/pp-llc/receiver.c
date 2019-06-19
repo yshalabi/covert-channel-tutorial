@@ -33,9 +33,9 @@ void init_config(struct config *config, int argc, char **argv) {
                 addr_set_size++;
             }
             // restrict the probing set to CACHE_WAYS_L1 to aviod self eviction
-	        if (addr_set_size >= 2 * (CACHE_WAYS_L1 + CACHE_WAYS_L2)) {
+            if (addr_set_size >= 3 * (CACHE_WAYS_L1 + CACHE_WAYS_L2)) {
                 break;
-	        }
+            }
         }
         printf("Found addr_set size of %u\n", addr_set_size);
     }
