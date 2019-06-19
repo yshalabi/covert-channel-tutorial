@@ -9,12 +9,10 @@ RUN \
     apt-get install -y bash && \
     apt-get install -y git
 
-# Set environment variables.
-#ENV HOME /root
 WORKDIR /isca19
 
-RUN mkdir build && cd build && cmake .. && make && ls
-
 COPY . /isca19
+
+RUN mkdir build && cd build && cmake .. && make && ls
 
 CMD sh isca19.sh
