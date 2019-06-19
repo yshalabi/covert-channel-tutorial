@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.12)
 include(ExternalProject)
 project (covert-channels)
+set (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 add_subdirectory (cc-libs)
 add_subdirectory (channels/pp-l1d)
 add_subdirectory (channels/fr)
