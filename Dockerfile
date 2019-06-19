@@ -17,7 +17,8 @@ WORKDIR /isca19
 # Copy the current directory contents into the container at /app
 COPY . /isca19
 
-RUN cmake . && make && ls
+RUN mkdir build && cd build && cmake .. && make && ls
 
-# Define default command.
-CMD ["bash", "isca19.sh"]
+CMD sh isca19.sh
+
+#cp build/pp* /isca19/bins
