@@ -7,5 +7,5 @@
 	url = ../../moehajj/Flush-Reload
 [submodule "extern/pp-l1d-repo"]
 	path = extern/pp-l1d-repo
-	url = ../../yshalabi/cc-fun
+	url = ../../yshalabi/covert-channel-toolkit
     branch = isca19_tutorial
