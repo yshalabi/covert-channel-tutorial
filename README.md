@@ -41,7 +41,7 @@ Running the LLC prime+probe;
 ## LLC Prime+Probe (Link to implementation)
 
 # Sources
-The covert-channel implementaions are sourced from the following repositories. You can examine the sources in  the "extern" subdirectory.
-- repo1
-- repo2
-- repo3
+This main pieces of this repository are [three covert channel implementations](../blob/master/extern). The implementations and their sources:
+- [Synchronous, Shared-Memory, Flush+Reload Covert Channel](https://github.com/moehajj/Flush-Reload)
+- [Synchronous Prime+Probe, Last-Level Cache](https://github.com/0x161e-swei/covert-channel-101)
+- [Asynchronous Prime+Probe, L1 Data-Cache](https://github.com/yshalabi/cc-fun)
