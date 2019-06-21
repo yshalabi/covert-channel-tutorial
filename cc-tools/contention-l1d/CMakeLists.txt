@@ -15,4 +15,4 @@ add_custom_command(
 	TARGET measure-l1d-contention POST_BUILD
 	COMMAND ${CMAKE_COMMAND} -E copy
     ${CMAKE_CURRENT_SOURCE_DIR}/Viz_L1D_contention.sh
-    ${CMAKE_BINARY_DIR}/Viz_L1D_contention.sh)
+    ${CMAKE_BINARY_DIR}/graph-l1d-contention)
