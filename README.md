@@ -19,6 +19,7 @@ make
 ```
 # covert-channel implementations
 ## Flush+Reload (Link to implementation)
+Running the flush+reload
 ```sh
 ./fr-send FILE
 ./fr-recv FILE
@@ -32,13 +33,21 @@ taskset -c Y ./pp-l1d-send
 taskset -c X ./pp-l1d-recv
 ```
 
-Running the LLC prime+probe;
+## LLC Prime+Probe (Link to implementation)
+
+Running the LLC prime+probe (chat mode)
 ```sh
-./pp-llc-send
-./pp-llc-recv
+# X is a range of cores on the same socket
+taskset -c X /pp-llc-send
+taskset -c X /pp-llc-recv
 ```
 
-## LLC Prime+Probe (Link to implementation)
+To run the LLC prime+probe in benchmark mode:  
+Specify option `-b` to both reader and sender and launch reader first.
+OR run
+```sh
+./pp-llc-benchmark.py
+```
 
 # Sources
 This main pieces of this repository are [three covert channel implementations](../master/extern). The implementations and their sources:
