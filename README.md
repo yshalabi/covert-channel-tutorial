@@ -4,14 +4,14 @@ This repo contains a variety of software useful to those researching covert-chan
 # Building repo
 ## dockerized build
 ```sh
-git clone https://github.com/yshalabi/isca19-cc-handson.git && cd isca19-cc-handson
+git clone https://github.com/yshalabi/covert-channel-tutorial.git && cd isca19-cc-handson
 docker build -t compile .
 docker run -v `pwd`/cc:/isca19/bins compile
 ```
 
 ## cmake build
 ```sh
-git clone https://github.com/yshalabi/isca19-cc-handson.git && cd isca19-cc-handson
+git clone https://github.com/yshalabi/covert-channel-tutorial.git && cd isca19-cc-handson
 mkdir build
 cd build
 cmake ..
