@@ -18,14 +18,14 @@ cmake ..
 make
 ```
 # covert-channel implementations
-## Flush+Reload (Link to implementation)
+## Flush+Reload
 Running the flush+reload
 ```sh
 ./fr-send FILE
 ./fr-recv FILE
 ```
 
-## L1D Prime+Probe (Link to implementation)
+## L1D Prime+Probe
 Running the l1d prime+probe
 ```sh
 # Y,X are sibling threads
@@ -33,7 +33,7 @@ taskset -c Y ./pp-l1d-send
 taskset -c X ./pp-l1d-recv
 ```
 
-## LLC Prime+Probe (Link to implementation)
+## LLC Prime+Probe
 
 Running the LLC prime+probe (chat mode)
 ```sh
