@@ -21,8 +21,8 @@ make
 ## Flush+Reload
 Running the flush+reload
 ```sh
-./fr-send FILE
-./fr-recv FILE
+./fr-send -f FILE
+./fr-recv -f FILE
 ```
 
 ## L1D Prime+Probe
